@@ -1,0 +1,10 @@
+{
+  "name": "nodejs-caller",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "express-framework": "^1.2.1",
+    "koa": "^2.2.0",
+    "mocha": "^3.4.1"
+  }
+}
