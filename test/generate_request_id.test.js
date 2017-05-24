@@ -1,4 +1,4 @@
-let generate_request_id = require('../generate_request_id');
+let generate_request_id = require('../lib/generate_request_id');
 let assert = require('assert');
 
 describe('generate_request_id should generate the unique id', function()
