@@ -4,69 +4,88 @@ const generate_request_id = require('../lib/generate_request_id');
 
 module.exports = async function(ctx, next)
 {
-    const req = ctx.req;
-    const form = new Formidable.IncomingForm();
-    form.uploadDir = config.upload_dir;
-    form.keepExtensions = true;
-    form.encoding = 'utf8';
-    form.parse(req, function(err, fields, files)
+    try
     {
-        if(err)
+        const form_data = await check_form(ctx.req);
+        ctx.state.request_id = generate_request_id();
+        Object.assign(ctx.state, form_data);
+        console.log(ctx.state);
+        next();
+    }
+    catch(e)
+    {
+        ctx.body = JSON.stringify(e);
+    }
+};
+
+function check_form(req)
+{
+    return new Promise(function(resolve, reject)
+    {
+        const form = new Formidable.IncomingForm();
+        form.uploadDir = config.upload_dir;
+        form.keepExtensions = true;
+        form.encoding = 'utf8';
+        form.parse(req, function(err, fields, files)
         {
-            console.log(err);
-            ctx.body = JSON.parse
-            (
-                {
+            if(err)
+            {
+                console.log(err);
+                reject
+                (
+                    {
                     status: 'form_parse_error',
                     message: err.message
+                    }
+                );
+            }
+            else
+            {
+                console.log(fields);
+
+                const file = files.file;
+                if( files.length > 1 )
+                {
+                    reject
+                    (
+                        {
+                            status: 'one_file_one_time',
+                            message: 'one request can only contains one files to transform',
+                        }
+                    );
+                    return;
                 }
-            );
-        }
-        else
-        {
-            console.log(fields);
-            console.log(files);
+                if( ! file )
+                {
+                    reject
+                    (
+                        {
+                            status: 'file_field_not_found',
+                            message: 'there seems have no file in the request',
+                        }
+                    );
+                    return;
+                }
+                if( ! fields.from || ! fields.to )
+                {
+                    reject
+                    (
+                        {
+                            status: 'param_not_valid',
+                            message: 'the field "from" and "to" must exist',
+                        }
+                    );
+                    return;
+                }
 
-            const file = files[0];
-            if( files.length > 1 )
-            {
-                ctx.body = JSON.stringify
-                (
+                const form_data =
                     {
-                        status: 'one_file_one_time',
-                        message: 'one request can only contains one files to transform',
-                    }
-                );
-                return;
+                        from: fields.from,
+                        to: fields.to,
+                        uploaded_file: file
+                    };
+                resolve(form_data);
             }
-            if( ! file )
-            {
-                ctx.body = JSON.stringify
-                (
-                    {
-                        status: 'file_field_not_found',
-                        message: 'there seems have no file in the request',
-                    }
-                );
-                return;
-            }
-            if( ! fields.from || ! fields.to )
-            {
-                ctx.body = JSON.stringify
-                (
-                    {
-                        status: 'param_not_valid',
-                        message: 'the field "from" and "to" must exist',
-                    }
-                );
-                return;
-            }
-
-            ctx.request_id = generate_request_id();
-            ctx.from = fields.from;
-            ctx.to = fields.to;
-            ctx.state.file = file;
-            next();
-        }
-    });
-};
+        });
+    })
+}
