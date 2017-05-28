@@ -17,7 +17,7 @@ describe('the pdf2img command executor', function()
             it(`when transforming ${e}`, function()
             {
                 this.timeout(60000);
-                return pdf2img(e, config.output_dir.image + path.sep + 'test');
+                return pdf2img(e);
             });
         });
     });

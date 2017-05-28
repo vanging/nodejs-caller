@@ -5,7 +5,9 @@ const fs = require('fs');
 const ppt_file_list = fs.readdirSync(path.resolve(config.sample_dir.ppt)).map(function(e)
 {
     return path.resolve(config.sample_dir.ppt, e);
-});
+})
+    .slice(0, 1)
+;
 console.log(ppt_file_list);
 
 describe('the ppt2pdf command executor', function()
